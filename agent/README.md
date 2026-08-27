@@ -7,7 +7,7 @@ Der lokale Agent fuehrt SFTP-Deployments auf deinem Rechner aus. Die Verwaltung 
 Einmalig:
 
 ```bash
-php Verwaltung/agent/generate_cert.php
+php agent/generate_cert.php
 ```
 
 Danach das Zertifikat fuer `127.0.0.1` bzw. `localhost` im System/Browser vertrauen.
@@ -17,7 +17,7 @@ Danach das Zertifikat fuer `127.0.0.1` bzw. `localhost` im System/Browser vertra
 Im Projekt-Root starten:
 
 ```bash
-php Verwaltung/agent/server.php
+php agent/server.php
 ```
 
 Dann auf der Deploy-Seite den Bereich `Lokaler SFTP-Agent` nutzen.
@@ -39,5 +39,5 @@ Installiere WinSCP oder setze den Pfad explizit:
 
 ```powershell
 $env:WINSCP_PATH="C:\Program Files\WinSCP\WinSCP.com"
-php Verwaltung/agent/server.php
+php agent/server.php
 ```

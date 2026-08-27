@@ -44,6 +44,28 @@ ob_start();
                 </div>
             </div>
 
+            <div>
+                <h2 class="section-title">Frontend-Zuordnung</h2>
+                <p class="section-copy">Diese Werte verhindern, dass versehentlich das Frontend eines anderen Kunden ausgerollt wird.</p>
+            </div>
+
+            <div class="form-grid form-grid--2">
+                <div class="field">
+                    <label for="frontend_key">Frontend-Key</label>
+                    <input class="input" type="text" id="frontend_key" name="frontend_key" value="<?php echo htmlspecialchars((string)($old['frontendKey'] ?? $customer['frontend_key'] ?? ''), ENT_QUOTES, 'UTF-8'); ?>" placeholder="z.B. sport-voice">
+                </div>
+                <div class="field">
+                    <label for="frontend_ref">Branch oder Tag</label>
+                    <input class="input" type="text" id="frontend_ref" name="frontend_ref" value="<?php echo htmlspecialchars((string)($old['frontendRef'] ?? $customer['frontend_ref'] ?? 'main'), ENT_QUOTES, 'UTF-8'); ?>">
+                </div>
+            </div>
+
+            <div class="field">
+                <label for="frontend_repository">Frontend-Repository</label>
+                <input class="input" type="text" id="frontend_repository" name="frontend_repository" value="<?php echo htmlspecialchars((string)($old['frontendRepository'] ?? $customer['frontend_repository'] ?? ''), ENT_QUOTES, 'UTF-8'); ?>" placeholder="owner/frontend-sport-voice">
+                <div class="field__hint">Format: GitHub-Owner/Repository. Leer lassen, solange das Repository noch nicht angelegt ist.</div>
+            </div>
+
             <div class="form-grid form-grid--2">
                 <div class="field">
                     <label for="email">E-Mail</label>

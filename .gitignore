@@ -19,4 +19,16 @@ __MACOSX/
 # IDE
 .idea/
 .vscode/
+.claude/
 *.swp
+
+# Abhaengige Projekte werden nicht eingebettet
+CMS/
+Frontend/
+
+# Lokale Schluessel und Archive
+agent/certs/*.crt
+agent/certs/*.key
+*.zip
+secrets/
+.ssh/

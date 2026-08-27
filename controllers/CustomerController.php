@@ -66,6 +66,9 @@ class CustomerController
 
         $name      = trim($_POST['name']      ?? '');
         $domain    = trim($_POST['domain']    ?? '');
+        $frontendKey = strtolower(trim((string)($_POST['frontend_key'] ?? '')));
+        $frontendRepository = trim((string)($_POST['frontend_repository'] ?? ''));
+        $frontendRef = trim((string)($_POST['frontend_ref'] ?? 'main')) ?: 'main';
         $email     = trim($_POST['email']     ?? '');
         $aboStatus = (string)($_POST['abo_status'] ?? 'active');
         $aboActiveUntil = trim((string)($_POST['abo_active_until'] ?? ''));
@@ -90,6 +93,12 @@ class CustomerController
             $errors[] = 'Domain darf kein Protokoll oder Slashes enthalten.';
         }
 
+        $errors = array_merge($errors, $this->validateFrontendAssignment(
+            $frontendKey,
+            $frontendRepository,
+            $frontendRef
+        ));
+
         if ($email !== '' && !filter_var($email, FILTER_VALIDATE_EMAIL)) {
             $errors[] = 'E-Mail-Adresse ist ungültig.';
         }
@@ -104,7 +113,10 @@ class CustomerController
 
         if (!empty($errors)) {
             $_SESSION['flash_errors'] = $errors;
-            $_SESSION['flash_old']    = compact('name', 'domain', 'email', 'aboStatus', 'aboActiveUntil', 'notes', 'isActive');
+            $_SESSION['flash_old']    = compact(
+                'name', 'domain', 'frontendKey', 'frontendRepository', 'frontendRef',
+                'email', 'aboStatus', 'aboActiveUntil', 'notes', 'isActive'
+            );
             header('Location: /admin/customers/create');
             exit;
         }
@@ -112,6 +124,9 @@ class CustomerController
         $newId = $this->customerRepo->create(
             $name,
             $domain,
+            $frontendKey,
+            $frontendRepository,
+            $frontendRef,
             $email,
             $aboStatus,
             $aboActiveUntil !== '' ? $aboActiveUntil : null,
@@ -162,6 +177,9 @@ class CustomerController
 
         $name      = trim($_POST['name']      ?? '');
         $domain    = trim($_POST['domain']    ?? '');
+        $frontendKey = strtolower(trim((string)($_POST['frontend_key'] ?? '')));
+        $frontendRepository = trim((string)($_POST['frontend_repository'] ?? ''));
+        $frontendRef = trim((string)($_POST['frontend_ref'] ?? 'main')) ?: 'main';
         $email     = trim($_POST['email']     ?? '');
         $aboStatus = (string)($_POST['abo_status'] ?? 'active');
         $aboActiveUntil = trim((string)($_POST['abo_active_until'] ?? ''));
@@ -185,6 +203,12 @@ class CustomerController
             $errors[] = 'Domain darf kein Protokoll oder Slashes enthalten.';
         }
 
+        $errors = array_merge($errors, $this->validateFrontendAssignment(
+            $frontendKey,
+            $frontendRepository,
+            $frontendRef
+        ));
+
         if ($email !== '' && !filter_var($email, FILTER_VALIDATE_EMAIL)) {
             $errors[] = 'E-Mail-Adresse ist ungültig.';
         }
@@ -199,7 +223,10 @@ class CustomerController
 
         if (!empty($errors)) {
             $_SESSION['flash_errors'] = $errors;
-            $_SESSION['flash_old']    = compact('name', 'domain', 'email', 'aboStatus', 'aboActiveUntil', 'notes');
+            $_SESSION['flash_old']    = compact(
+                'name', 'domain', 'frontendKey', 'frontendRepository', 'frontendRef',
+                'email', 'aboStatus', 'aboActiveUntil', 'notes'
+            );
             header('Location: /admin/customers/' . $id . '/edit');
             exit;
         }
@@ -208,6 +235,9 @@ class CustomerController
             $id,
             $name,
             $domain,
+            $frontendKey,
+            $frontendRepository,
+            $frontendRef,
             $email,
             $aboStatus,
             $aboActiveUntil !== '' ? $aboActiveUntil : null,
@@ -266,5 +296,30 @@ class CustomerController
         return $date !== false
             && ($errors === false || ($errors['warning_count'] === 0 && $errors['error_count'] === 0))
             && $date->format('Y-m-d') === $value;
+    }
+
+    /** @return list<string> */
+    private function validateFrontendAssignment(
+        string $key,
+        string $repository,
+        string $ref
+    ): array {
+        $errors = [];
+        if ($key !== '' && preg_match('/^[a-z0-9][a-z0-9-]{0,99}$/', $key) !== 1) {
+            $errors[] = 'Frontend-Key darf nur Kleinbuchstaben, Zahlen und Bindestriche enthalten.';
+        }
+        if ($repository !== ''
+            && preg_match('#^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$#', $repository) !== 1) {
+            $errors[] = 'Frontend-Repository muss im Format owner/repository angegeben werden.';
+        }
+        if ($repository !== '' && $key === '') {
+            $errors[] = 'Fuer ein Frontend-Repository muss ein Frontend-Key gesetzt sein.';
+        }
+        if (preg_match('#^[A-Za-z0-9][A-Za-z0-9._/-]{0,99}$#', $ref) !== 1
+            || str_contains($ref, '..')
+            || str_contains($ref, '//')) {
+            $errors[] = 'Frontend-Branch oder -Tag ist ungueltig.';
+        }
+        return $errors;
     }
 }

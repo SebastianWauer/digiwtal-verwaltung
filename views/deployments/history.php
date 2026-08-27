@@ -122,8 +122,8 @@ ob_start();
                     <div class="agent-status" id="localAgentStatus">Status: nicht geprüft</div>
                 </div>
                 <p class="deploy-card__copy">Lokaler HTTPS-Agent auf <code>https://127.0.0.1:8765</code> für One-Click-SFTP.</p>
-                <code class="code-block">php Verwaltung/agent/generate_cert.php
-php Verwaltung/agent/server.php</code>
+                <code class="code-block">php agent/generate_cert.php
+php agent/server.php</code>
                 <div class="field__hint">Einmal im selben Browser <a class="link-action link-action--success" href="https://127.0.0.1:8765/health" target="_blank" rel="noreferrer">https://127.0.0.1:8765/health</a> öffnen und das lokale Zertifikat vertrauen.</div>
             </article>
             <article class="deploy-meta-card deploy-meta-card--warning">
@@ -211,7 +211,7 @@ php Verwaltung/agent/server.php</code>
                 <input type="hidden" name="type" value="combined">
                 <div class="deploy-card__eyebrow">Update</div>
                 <h2 class="deploy-card__title">CMS + Frontend deployen</h2>
-                <p class="deploy-card__copy">CMS aus <code>/CMS</code> plus gewähltes Frontend in einem Schritt.</p>
+                <p class="deploy-card__copy">Bewusster manueller Sonderfall: separates CMS-Projekt plus gewähltes Frontend in einem Schritt.</p>
                 <?php if (!empty($combinedDeployRequirements)): ?>
                     <div class="field__hint">Blockiert bis konfiguriert: <?php echo htmlspecialchars(implode(', ', $combinedDeployRequirements), ENT_QUOTES); ?></div>
                 <?php endif; ?>

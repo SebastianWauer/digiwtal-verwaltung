@@ -35,7 +35,7 @@ ini_set('log_errors', '1');
     }
 })();
 
-require_once dirname(__DIR__, 2) . '/shared/FileLogger.php';
+require_once dirname(__DIR__) . '/app/FileLogger.php';
 
 $allowedHost = (string)(getenv('ADMIN_HOST') ?: '');
 

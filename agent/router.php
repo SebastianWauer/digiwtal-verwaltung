@@ -579,21 +579,6 @@ try {
                 'remote_path' => $pathDeployment['public_path'],
             ];
 
-            if ($type === 'cms') {
-                $frontendHtaccessSource = @file_get_contents(dirname(__DIR__, 2) . '/Frontend/.htaccess');
-                if (!is_string($frontendHtaccessSource)) {
-                    throw new RuntimeException('Frontend-.htaccess konnte nicht gelesen werden.');
-                }
-                $frontendHtaccessPath = $stageRoot . '/frontend.htaccess';
-                if (@file_put_contents($frontendHtaccessPath, frontend_path_htaccess($frontendHtaccessSource, $pathDeployment)) === false) {
-                    throw new RuntimeException('Frontend-.htaccess konnte nicht vorbereitet werden.');
-                }
-                $operations[] = [
-                    'label' => 'frontend-routing (' . $pathDeployment['base_path'] . ')',
-                    'files' => [$frontendHtaccessPath => '.htaccess'],
-                    'remote_path' => (string)($server['html_path'] ?? '/Frontend'),
-                ];
-            }
             $debugInfo[] = 'CMS-Pfadanbindung vorbereitet: ' . $pathDeployment['base_path'];
         }
     }

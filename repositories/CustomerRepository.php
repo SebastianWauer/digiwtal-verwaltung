@@ -14,7 +14,8 @@ class CustomerRepository
     {
         $stmt = $this->pdo->query("
             SELECT
-                c.id, c.name, c.domain, c.email, c.is_active, c.abo_status, c.abo_active_until,
+                c.id, c.name, c.domain, c.frontend_key, c.frontend_repository, c.frontend_ref,
+                c.email, c.is_active, c.abo_status, c.abo_active_until,
                 CASE
                     WHEN c.is_active = 1
                      AND c.abo_status = 'active'
@@ -120,6 +121,9 @@ class CustomerRepository
     public function create(
         string $name,
         string $domain,
+        string $frontendKey = '',
+        string $frontendRepository = '',
+        string $frontendRef = 'main',
         string $email     = '',
         string $aboStatus = 'active',
         ?string $aboActiveUntil = null,
@@ -127,10 +131,15 @@ class CustomerRepository
         int    $isActive  = 1
     ): int {
         $stmt = $this->pdo->prepare(
-            'INSERT INTO customers (name, domain, email, abo_status, abo_active_until, notes, is_active)
-             VALUES (?, ?, ?, ?, ?, ?, ?)'
+            'INSERT INTO customers
+                (name, domain, frontend_key, frontend_repository, frontend_ref,
+                 email, abo_status, abo_active_until, notes, is_active)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
         );
-        $stmt->execute([$name, $domain, $email, $aboStatus, $aboActiveUntil, $notes ?: null, $isActive]);
+        $stmt->execute([
+            $name, $domain, $frontendKey !== '' ? $frontendKey : null, $frontendRepository, $frontendRef,
+            $email, $aboStatus, $aboActiveUntil, $notes ?: null, $isActive,
+        ]);
 
         $id = (int)$this->pdo->lastInsertId();
 
@@ -147,6 +156,9 @@ class CustomerRepository
         int    $id,
         string $name,
         string $domain,
+        string $frontendKey = '',
+        string $frontendRepository = '',
+        string $frontendRef = 'main',
         string $email     = '',
         string $aboStatus = 'active',
         ?string $aboActiveUntil = null,
@@ -154,10 +166,14 @@ class CustomerRepository
     ): void {
         $stmt = $this->pdo->prepare(
             'UPDATE customers
-             SET name = ?, domain = ?, email = ?, abo_status = ?, abo_active_until = ?, notes = ?
+             SET name = ?, domain = ?, frontend_key = ?, frontend_repository = ?, frontend_ref = ?,
+                 email = ?, abo_status = ?, abo_active_until = ?, notes = ?
              WHERE id = ?'
         );
-        $stmt->execute([$name, $domain, $email, $aboStatus, $aboActiveUntil, $notes ?: null, $id]);
+        $stmt->execute([
+            $name, $domain, $frontendKey !== '' ? $frontendKey : null, $frontendRepository, $frontendRef,
+            $email, $aboStatus, $aboActiveUntil, $notes ?: null, $id,
+        ]);
     }
 
     public function toggleActive(int $id, int $isActive): void

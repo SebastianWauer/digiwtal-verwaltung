@@ -44,6 +44,24 @@ ob_start();
     </section>
 
     <section class="surface">
+        <h2 class="section-title">Frontend-Zuordnung</h2>
+        <div class="detail-grid">
+            <div class="detail-item">
+                <div class="detail-item__label">Frontend-Key</div>
+                <div class="detail-item__value mono"><?php echo htmlspecialchars((string)($customer['frontend_key'] ?? '—'), ENT_QUOTES); ?></div>
+            </div>
+            <div class="detail-item">
+                <div class="detail-item__label">GitHub-Repository</div>
+                <div class="detail-item__value mono"><?php echo htmlspecialchars((string)($customer['frontend_repository'] ?? '—'), ENT_QUOTES); ?></div>
+            </div>
+            <div class="detail-item">
+                <div class="detail-item__label">Branch/Tag</div>
+                <div class="detail-item__value mono"><?php echo htmlspecialchars((string)($customer['frontend_ref'] ?? 'main'), ENT_QUOTES); ?></div>
+            </div>
+        </div>
+    </section>
+
+    <section class="surface">
         <h2 class="section-title">Aktueller Status</h2>
         <?php if ($latestCheck): ?>
             <?php

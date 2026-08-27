@@ -90,6 +90,11 @@ class CiController
                 'name' => (string)($customer['name'] ?? ''),
                 'updates_available_until' => trim((string)($customer['abo_active_until'] ?? '')) ?: 'unlimited',
             ],
+            'frontend' => [
+                'key'        => (string)($customer['frontend_key'] ?? ''),
+                'repository' => (string)($customer['frontend_repository'] ?? ''),
+                'ref'        => trim((string)($customer['frontend_ref'] ?? '')) ?: 'main',
+            ],
             'ssh' => [
                 'host'     => (string)($access['host'] ?? ''),
                 // Der Port im Serverzugang beschreibt, wie die Verwaltung selbst

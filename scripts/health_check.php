@@ -7,7 +7,7 @@ declare(strict_types=1);
  *
  * Duenner Aufruf um HealthMonitor - die Logik liegt im Service, damit Cron und
  * Pipeline nicht auseinanderlaufen koennen. Empfohlener Takt: alle fuenf
- * Minuten, siehe Verwaltung/docs/cron-setup.md.
+ * Minuten, siehe docs/cron-setup.md.
  *
  * Der Lauf traegt sich in monitor_runs ein. Bleibt der Eintrag stehen, meldet
  * das Dashboard, dass die Ueberwachung selbst ausgefallen ist.

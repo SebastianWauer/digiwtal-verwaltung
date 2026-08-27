@@ -59,17 +59,17 @@ ob_start();
     </section>
 
     <section class="surface">
-        <h2 class="section-title">Rollout starten</h2>
+        <h2 class="section-title">CMS-Rollout starten</h2>
         <?php if (!$github['token_da'] || $github['repo'] === ''): ?>
             <p class="section-copy">Damit dieser Knopf funktioniert, brauchen die Verwaltung folgende Werte in ihrer
-               <code>.env</code>: <code>GITHUB_REPO</code> (z.&nbsp;B. <code>SebastianWauer/digiwtal-cms</code>),
+               <code>.env</code>: <code>GITHUB_REPO</code> (CMS-Repository, z.&nbsp;B. <code>SebastianWauer/digiwtal-cms</code>),
                <code>GITHUB_TOKEN</code> (Fine-grained Token mit <em>Actions: Read and write</em>) und optional
                <code>GITHUB_WORKFLOW</code> sowie <code>GITHUB_BRANCH</code>.</p>
         <?php else: ?>
             <p class="section-copy">
-                Rollt den aktuellen Stand von Branch <code><?php echo htmlspecialchars($github['branch'], ENT_QUOTES); ?></code>
+                Rollt ausschließlich den gemeinsamen CMS-Stand von Branch <code><?php echo htmlspecialchars($github['branch'], ENT_QUOTES); ?></code>
                 an alle freigeschalteten Kunden mit wirksamem Abo und vollständiger Konfiguration aus.
-                Migrationen werden automatisch ausgeführt.
+                Kundenfrontends bleiben unverändert; CMS-Migrationen werden automatisch ausgeführt.
             </p>
 
             <div class="detail-grid">
@@ -90,7 +90,7 @@ ob_start();
                 </p>
                 <form method="post" action="/admin/ci/dispatch">
                     <?php echo Csrf::field(); ?>
-                    <button class="btn btn--warning" type="submit">Aktuellen Stand an alle aktiven Kunden ausrollen</button>
+                    <button class="btn btn--warning" type="submit">CMS an alle aktiven Kunden ausrollen</button>
                 </form>
             <?php else: ?>
                 <div class="hint-card hint-card--warning">Aktuell erfüllt kein Kunde alle Rollout-Voraussetzungen.</div>

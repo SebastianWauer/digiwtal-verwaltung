@@ -38,6 +38,28 @@ ob_start();
                 </div>
             </div>
 
+            <div>
+                <h2 class="section-title">Frontend-Zuordnung</h2>
+                <p class="section-copy">Eindeutige Identitaet und spaeteres GitHub-Repository dieses Kundenfrontends.</p>
+            </div>
+
+            <div class="form-grid form-grid--2">
+                <div class="field">
+                    <label for="frontend_key">Frontend-Key</label>
+                    <input class="input" type="text" id="frontend_key" name="frontend_key" value="<?php echo htmlspecialchars((string)($old['frontendKey'] ?? ''), ENT_QUOTES, 'UTF-8'); ?>" placeholder="z.B. sport-voice">
+                </div>
+                <div class="field">
+                    <label for="frontend_ref">Branch oder Tag</label>
+                    <input class="input" type="text" id="frontend_ref" name="frontend_ref" value="<?php echo htmlspecialchars((string)($old['frontendRef'] ?? 'main'), ENT_QUOTES, 'UTF-8'); ?>">
+                </div>
+            </div>
+
+            <div class="field">
+                <label for="frontend_repository">Frontend-Repository</label>
+                <input class="input" type="text" id="frontend_repository" name="frontend_repository" value="<?php echo htmlspecialchars((string)($old['frontendRepository'] ?? ''), ENT_QUOTES, 'UTF-8'); ?>" placeholder="owner/frontend-sport-voice">
+                <div class="field__hint">Leer lassen, solange das GitHub-Repository noch nicht angelegt ist.</div>
+            </div>
+
             <div class="form-grid form-grid--2">
                 <div class="field">
                     <label for="email">E-Mail</label>

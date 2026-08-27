@@ -326,7 +326,7 @@ class CmsProvisioningService
             PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
         ]);
 
-        $migrationsDir = dirname(__DIR__, 2) . '/CMS/migrations';
+        $migrationsDir = $this->cmsSourceDir() . '/migrations';
         $result = \App\Setup\MigrationsRunner::run($pdo, $migrationsDir);
         foreach ($result['log'] ?? [] as $line) {
             $logger('[PROVISION][DB] ' . $line);
@@ -387,7 +387,14 @@ class CmsProvisioningService
 
     private function loadCmsProvisioningDependencies(): void
     {
-        require_once dirname(__DIR__, 2) . '/CMS/app/Setup/MigrationsRunner.php';
+        require_once $this->cmsSourceDir() . '/app/Setup/MigrationsRunner.php';
+    }
+
+    private function cmsSourceDir(): string
+    {
+        $configured = trim((string)(getenv('CMS_SOURCE_DIR') ?: ''));
+        $source = $configured !== '' ? $configured : dirname(__DIR__, 2) . '/CMS';
+        return rtrim($source, '/\\');
     }
 
     private function generateUniqueUsername(PDO $pdo, string $email): string

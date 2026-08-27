@@ -7,7 +7,7 @@ laeuft die andere weiter - und das Dashboard sagt es, wenn beide schweigen.
 |---|---|---|---|
 | Cron der Verwaltung | IONOS-Webspace | alle 5 Minuten | `cron` |
 | Geplanter CI-Lauf | GitHub Actions (`health.yml`) | alle 5 Minuten, versetzt | `ci` |
-| Rollout einer Instanz | GitHub Actions (`deploy-instanz.yml`) | bei jedem Rollout | `rollout` |
+| CMS-Rollout einer Instanz | GitHub Actions des CMS (`deploy.yml`) | bei jedem Rollout | `rollout` |
 
 ## Cron-Job
 
@@ -19,7 +19,7 @@ PHP-Skript ist deshalb selbst ausfuehrbar und enthaelt den auf dem
 IONOS-Webhosting verwendeten PHP-8.5-CGI-Interpreter:
 
 ```cron
-*/5 * * * * /home/www/Verwaltung/scripts/health_check.php
+*/5 * * * * /home/www/verwaltung/scripts/health_check.php
 ```
 
 Bei jedem Start schreibt das Skript ein Lebenszeichen nach
@@ -40,11 +40,11 @@ eigenen CI-Token direkt den Verwaltungs-Endpunkt aufrufen:
 ### Alternative: PHP direkt ausfuehren
 
 ```cron
-*/5 * * * * /usr/bin/php8.5 -f /pfad/zum/projekt/Verwaltung/scripts/health_check.php
+*/5 * * * * /usr/bin/php8.5 -f /pfad/zur/verwaltung/scripts/health_check.php
 ```
 
 Das Skript ist ein duenner Aufruf um `services/HealthMonitor.php`. Benoetigte
-Werte kommen aus `Verwaltung/.env`: `DB_HOST`, `DB_NAME`, `DB_USER`, `DB_PASS`,
+Werte kommen aus `.env`: `DB_HOST`, `DB_NAME`, `DB_USER`, `DB_PASS`,
 optional `HEALTH_ALERT_EMAIL` (Standard: info@digiwtal.de) und `HC_DEBUG=1` fuer
 ausfuehrliche Logzeilen.
 

@@ -30,7 +30,7 @@ declare(strict_types=1);
         $_ENV[$k] = $v;
     }
 })();
-require_once dirname(__DIR__, 2) . '/shared/FileLogger.php';
+require_once __DIR__ . '/FileLogger.php';
 
 // -------------------------------------------------------
 // Error Handling (DEV/PROD aware)

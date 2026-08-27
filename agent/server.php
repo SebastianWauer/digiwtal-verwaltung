@@ -8,7 +8,7 @@ const AGENT_PORT = 8765;
 
 if (!is_file(AGENT_CERT_FILE) || !is_file(AGENT_KEY_FILE)) {
     fwrite(STDERR, "Lokales HTTPS-Zertifikat fehlt. Erzeuge es zuerst mit:\n");
-    fwrite(STDERR, "php Verwaltung/agent/generate_cert.php\n");
+    fwrite(STDERR, "php agent/generate_cert.php\n");
     exit(1);
 }
 

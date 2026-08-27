@@ -57,7 +57,7 @@ Reihe nach.
 
 ## Reihenfolge bei einer neuen Datei
 
-1. SQL-Datei nach `Verwaltung/migrations/` legen, fortlaufend nummeriert.
+1. SQL-Datei nach `migrations/` legen, fortlaufend nummeriert.
 2. Dateien auf den Webspace bringen.
 3. `/admin/migrations` oeffnen, Eintrag unter *Offene Migrationen* pruefen.
 4. *Anwenden* druecken.

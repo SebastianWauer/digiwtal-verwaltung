@@ -7,7 +7,7 @@ if (PHP_SAPI !== 'cli') {
 }
 
 $root = dirname(__DIR__);
-require_once dirname($root) . '/shared/FileLogger.php';
+require_once $root . '/app/FileLogger.php';
 
 (static function (string $rootPath): void {
     $file = $rootPath . '/.env';

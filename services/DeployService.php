@@ -51,8 +51,8 @@ class DeployService
             $this->log($deploymentId, "[INFO] Verbindungsmethode: {$method} (konfiguriertes Protokoll: " . (string)($access['protocol'] ?? 'sftp') . ')');
 
             // 5. CMS-Quelldateien bestimmen
-            $cmsSourceDir = $this->resolveSourceDir($sourceOverrides, 'cms', dirname(__DIR__, 2) . '/CMS');
-            $frontendSourceDir = $this->resolveSourceDir($sourceOverrides, 'frontend', dirname(__DIR__, 2) . '/Frontend');
+            $cmsSourceDir = $this->resolveSourceDir($sourceOverrides, 'cms', $this->configuredSourceDir('CMS_SOURCE_DIR', dirname(__DIR__, 2) . '/CMS'));
+            $frontendSourceDir = $this->resolveSourceDir($sourceOverrides, 'frontend', $this->configuredSourceDir('FRONTEND_SOURCE_DIR', ''));
 
             $pathDeployment = $this->pathDeploymentConfig($access);
             $operations = $this->buildDeployOperations($type, $cmsSourceDir, $frontendSourceDir, $access, $pathDeployment);
@@ -145,7 +145,7 @@ class DeployService
                 $this->log($deploymentId, "[INFO] {$uploaded}/{$totalFiles} Dateien übertragen.");
             }
 
-            if (!$this->configurePathDeployment($access, $password, $method, $cmsSourceDir, $frontendSourceDir, $pathDeployment)) {
+            if (!$this->configurePathDeployment($access, $password, $method, $type, $cmsSourceDir, $frontendSourceDir, $pathDeployment)) {
                 $this->log($deploymentId, '[ERROR] Die CMS-Pfadanbindung konnte nicht konfiguriert werden.');
                 $this->deployRepo->markFinished($deploymentId, 'failed');
                 return false;
@@ -219,8 +219,8 @@ class DeployService
             }
             $this->log($deploymentId, "[INFO] Verbindungsmethode: {$method} (konfiguriertes Protokoll: " . (string)($access['protocol'] ?? 'sftp') . ')');
 
-            $cmsSourceDir = $this->resolveSourceDir($sourceOverrides, 'cms', dirname(__DIR__, 2) . '/CMS');
-            $frontendSourceDir = $this->resolveSourceDir($sourceOverrides, 'frontend', dirname(__DIR__, 2) . '/Frontend');
+            $cmsSourceDir = $this->resolveSourceDir($sourceOverrides, 'cms', $this->configuredSourceDir('CMS_SOURCE_DIR', dirname(__DIR__, 2) . '/CMS'));
+            $frontendSourceDir = $this->resolveSourceDir($sourceOverrides, 'frontend', $this->configuredSourceDir('FRONTEND_SOURCE_DIR', ''));
 
             $remotePath = rtrim((string)($access['server_path'] ?? '/CMS'), '/');
             $pathDeployment = $this->pathDeploymentConfig($access);
@@ -294,7 +294,7 @@ class DeployService
                 $this->log($deploymentId, "[INFO] {$uploaded}/{$totalFiles} Dateien übertragen.");
             }
 
-            if (!$this->configurePathDeployment($access, $password, $method, $cmsSourceDir, $frontendSourceDir, $pathDeployment)) {
+            if (!$this->configurePathDeployment($access, $password, $method, $type, $cmsSourceDir, $frontendSourceDir, $pathDeployment)) {
                 $this->log($deploymentId, '[ERROR] Die CMS-Pfadanbindung konnte nicht konfiguriert werden.');
                 $this->deployRepo->markFinished($deploymentId, 'failed');
                 return false;
@@ -513,6 +513,12 @@ class DeployService
         return $fallback;
     }
 
+    private function configuredSourceDir(string $envKey, string $fallback): string
+    {
+        $configured = trim((string)(getenv($envKey) ?: ''));
+        return rtrim($configured !== '' ? $configured : $fallback, '/\\');
+    }
+
     /**
      * @return array<int,array{label:string,source_dir:string,remote_path:string,ignore:array<int,string>}>
      */
@@ -648,6 +654,7 @@ class DeployService
         array $access,
         string $password,
         string $method,
+        string $type,
         string $cmsSourceDir,
         string $frontendSourceDir,
         ?array $config
@@ -657,8 +664,7 @@ class DeployService
         }
 
         $cmsHtaccess = @file_get_contents(rtrim($cmsSourceDir, '/\\') . '/public/.htaccess');
-        $frontendHtaccess = @file_get_contents(rtrim($frontendSourceDir, '/\\') . '/.htaccess');
-        if (!is_string($cmsHtaccess) || !is_string($frontendHtaccess)) {
+        if (!is_string($cmsHtaccess)) {
             return false;
         }
 
@@ -669,6 +675,22 @@ class DeployService
             . "</IfModule>\n"
             . "# END DIGIWTAL CMS PATH DEPLOYMENT\n";
         $cmsHtaccess = $this->replaceManagedHtaccessBlock($cmsHtaccess, $cmsBlock);
+
+        $cmsUploaded = $this->uploadRemoteTextFile(
+            $access,
+            $password,
+            $config['public_path'] . '/.htaccess',
+            $cmsHtaccess,
+            $method
+        );
+        if (!$cmsUploaded || !$this->deploysFrontend($type)) {
+            return $cmsUploaded;
+        }
+
+        $frontendHtaccess = @file_get_contents(rtrim($frontendSourceDir, '/\\') . '/.htaccess');
+        if (!is_string($frontendHtaccess)) {
+            return false;
+        }
 
         $escapedPath = preg_quote(ltrim($config['base_path'], '/'), '#');
         $frontendBlock = "  # BEGIN DIGIWTAL CMS PATH DEPLOYMENT\n"
@@ -687,12 +709,6 @@ class DeployService
         }
 
         return $this->uploadRemoteTextFile(
-            $access,
-            $password,
-            $config['public_path'] . '/.htaccess',
-            $cmsHtaccess,
-            $method
-        ) && $this->uploadRemoteTextFile(
             $access,
             $password,
             rtrim((string)($access['html_path'] ?? '/Frontend'), '/') . '/.htaccess',

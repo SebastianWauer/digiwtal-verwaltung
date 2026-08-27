@@ -28,7 +28,7 @@ class CiTokenController
 
         $github = [
             'repo'     => (string)(getenv('GITHUB_REPO') ?: ''),
-            'workflow' => (string)(getenv('GITHUB_WORKFLOW') ?: 'deploy-instanz.yml'),
+            'workflow' => (string)(getenv('GITHUB_WORKFLOW') ?: 'deploy.yml'),
             'branch'   => (string)(getenv('GITHUB_BRANCH') ?: 'main'),
             'token_da' => trim((string)(getenv('GITHUB_TOKEN') ?: '')) !== '',
         ];
@@ -133,7 +133,7 @@ class CiTokenController
         $this->back();
     }
 
-    /** Startet den aktuellen Stand fuer alle berechtigten, fertigen Kunden. */
+    /** Startet den gemeinsamen CMS-Stand fuer alle berechtigten Kunden. */
     public function dispatchAll(): void
     {
         AdminAuth::requireAuth();
@@ -144,7 +144,7 @@ class CiTokenController
 
         $repo     = trim((string)(getenv('GITHUB_REPO') ?: ''));
         $token    = trim((string)(getenv('GITHUB_TOKEN') ?: ''));
-        $workflow = trim((string)(getenv('GITHUB_WORKFLOW') ?: 'deploy-instanz.yml'));
+        $workflow = trim((string)(getenv('GITHUB_WORKFLOW') ?: 'deploy.yml'));
         $branch   = trim((string)(getenv('GITHUB_BRANCH') ?: 'main'));
 
         if ($repo === '' || $token === '') {
@@ -175,7 +175,7 @@ class CiTokenController
         }
 
         if ($started !== []) {
-            $_SESSION['flash_success'] = 'Rollout für ' . count($started) . ' Kunde(n) gestartet: '
+            $_SESSION['flash_success'] = 'CMS-Rollout für ' . count($started) . ' Kunde(n) gestartet: '
                 . implode(', ', $started) . '. Der Fortschritt steht in GitHub unter Actions.';
         }
         if ($failed !== []) {

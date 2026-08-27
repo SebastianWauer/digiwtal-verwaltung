@@ -7,7 +7,7 @@ if (PHP_SAPI !== 'cli') {
 }
 
 if ($argc < 3) {
-    fwrite(STDERR, "Usage: php Verwaltung/scripts/check_admin_login.php <email> <password>\n");
+    fwrite(STDERR, "Usage: php scripts/check_admin_login.php <email> <password>\n");
     exit(1);
 }
 
@@ -91,4 +91,3 @@ echo json_encode([
     'password_verify' => ($hash !== '' ? password_verify($password, $hash) : false),
     'password_needs_rehash' => ($hash !== '' ? password_needs_rehash($hash, PASSWORD_BCRYPT, ['cost' => 12]) : null),
 ], JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT) . PHP_EOL;
-
