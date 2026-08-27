@@ -85,6 +85,8 @@ class CiController
 
         $cmsUrl = rtrim((string)($access['health_cms_url'] ?? ''), '/');
         $frontendUrl = rtrim((string)($access['health_frontend_url'] ?? ($access['canonical_base'] ?? '')), '/');
+        $frontendKey = trim((string)($customer['frontend_key'] ?? ''));
+        $frontendRepository = trim((string)($customer['frontend_repository'] ?? ''));
 
         $this->audit->log(
             'ci.deploy_target_read',
@@ -101,8 +103,8 @@ class CiController
                 'updates_available_until' => trim((string)($customer['abo_active_until'] ?? '')) ?: 'unlimited',
             ],
             'frontend' => [
-                'key'        => (string)($customer['frontend_key'] ?? ''),
-                'repository' => (string)($customer['frontend_repository'] ?? ''),
+                'key'        => $frontendKey,
+                'repository' => $frontendRepository,
                 'ref'        => trim((string)($customer['frontend_ref'] ?? '')) ?: 'main',
             ],
             'ssh' => [
@@ -136,7 +138,12 @@ class CiController
                 'deploy'    => $runtime['tokens']['deploy'],
                 'migration' => $runtime['tokens']['migration'],
                 'setup'     => $runtime['tokens']['setup'],
-                'api'       => $runtime['tokens']['api'],
+                // Erst aktivieren, wenn auch das getrennte Frontend den Token
+                // aus seinem Repository-Workflow erhalten kann. So bleiben
+                // noch nicht migrierte Kundenfrontends funktionsfaehig.
+                'api'       => ($frontendKey !== '' && $frontendRepository !== '')
+                    ? $runtime['tokens']['api']
+                    : '',
             ],
             'site' => [
                 'name'           => (string)($access['site_name'] ?? ''),
