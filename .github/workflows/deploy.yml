@@ -35,3 +35,9 @@ jobs:
             --exclude='agent/certs/*.crt' \
             --exclude='.ssh/' \
             ./ "${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}:${{ secrets.DEPLOY_PATH }}/"
+
+      - name: Migrationen ausfuehren
+        run: |
+          ssh -i ~/.ssh/deploy_key -p "${{ secrets.DEPLOY_PORT }}" \
+            "${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}" \
+            "cd '${{ secrets.DEPLOY_PATH }}' && php scripts/migrate.php"
