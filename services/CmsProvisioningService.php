@@ -12,7 +12,7 @@ class CmsProvisioningService
      * antwortete auf jede Anfrage mit 403, die Verwaltung konnte die von ihr
      * selbst aufgesetzten Instanzen also nicht ueberwachen.
      *
-     * @param array<string,string> $tokens Schluessel: setup, migration, health, deploy
+     * @param array<string,string> $tokens Schluessel: setup, migration, health, deploy, api
      */
     public function buildEnvContent(
         array $access,
@@ -37,6 +37,7 @@ class CmsProvisioningService
                 $lines[] = $this->envLine($envKey, $value);
             }
         }
+        $lines[] = $this->envLine('CMS_API_TOKEN', (string)($tokens['api'] ?? ''));
 
         // Basis-Pfad: kein eigenes Feld noetig, er steckt bereits im Pfadteil der
         // CMS-URL. Liegt das CMS unter https://kunde.de/verwaltung, ist der
@@ -56,13 +57,17 @@ class CmsProvisioningService
      * Wurde vorher gar nicht geschrieben: der Ordner wurde hochgeladen, blieb
      * aber ohne CMS_API_URL - das CMS stand danach, die Website nicht.
      */
-    public function buildFrontendEnvContent(?string $cmsBaseUrl, ?string $frontendBaseUrl): string
+    public function buildFrontendEnvContent(
+        ?string $cmsBaseUrl,
+        ?string $frontendBaseUrl,
+        string $apiToken = ''
+    ): string
     {
         $cms = $cmsBaseUrl !== null ? rtrim($cmsBaseUrl, '/') : '';
 
         $lines = [
             $this->envLine('CMS_API_URL', $cms !== '' ? $cms . '/api.php/api/v1' : ''),
-            $this->envLine('CMS_API_TOKEN', ''),
+            $this->envLine('CMS_API_TOKEN', $apiToken),
             $this->envLine('CMS_TIMEOUT', '5'),
             $this->envLine('CMS_CACHE_TTL', '300'),
             $this->envLine('FRONTEND_BASE_URL', $frontendBaseUrl !== null ? rtrim($frontendBaseUrl, '/') : ''),
@@ -73,12 +78,11 @@ class CmsProvisioningService
     }
 
     /**
-     * Sammelt die vier Betriebs-Tokens aus dem Vault.
+     * Sammelt die fuenf Betriebs-Tokens aus dem Vault.
      *
-     * Fuer Setup und Migration gibt es keine eigenen Vault-Felder; beide fallen
-     * auf das Deploy-Token zurueck. Das entspricht dem, was resolveSetupToken()
-     * ohnehin schon tat. Die Tokens sind damit pro Kunde verschieden, aber nicht
-     * pro Zweck - eine getrennte Ablage waere der naechste Schritt.
+     * Alte Installationen koennen noch keine getrennten Felder besitzen. Bis zur
+     * naechsten Speicherung beziehungsweise CI-Abfrage bleibt der Deploy-Token
+     * dort der kompatible Rueckfall fuer Setup und Migration.
      *
      * @return array<string,string>
      */
@@ -86,13 +90,23 @@ class CmsProvisioningService
     {
         $deploy = $this->decryptOptional($customerId, $encrypted, 'deploy_token');
         $health = $this->decryptOptional($customerId, $encrypted, 'health_token');
-        $setup  = $this->resolveSetupToken($customerId, $access, $encrypted) ?? $deploy;
+        $migration = $this->decryptOptional($customerId, $encrypted, 'migration_token');
+        $setup = $this->decryptOptional($customerId, $encrypted, 'setup_token');
+        $api = $this->decryptOptional($customerId, $encrypted, 'cms_api_token');
+
+        if ($migration === '') {
+            $migration = $deploy;
+        }
+        if ($setup === '') {
+            $setup = $this->resolveSetupToken($customerId, $access, $encrypted) ?? $deploy;
+        }
 
         return [
             'setup'     => $setup,
-            'migration' => $deploy,
+            'migration' => $migration,
             'health'    => $health,
             'deploy'    => $deploy,
+            'api'       => $api,
         ];
     }
 

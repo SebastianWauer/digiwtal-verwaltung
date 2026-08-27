@@ -90,9 +90,9 @@ ob_start();
 
             <hr class="divider">
 
-            <div class="field">
-                <label for="health_token">Health Token</label>
-                <input class="input" type="password" id="health_token" name="health_token" placeholder="Leer lassen = nicht ändern" autocomplete="off">
+            <div class="hint-card hint-card--info">
+                <strong>Automatische Betriebs-Tokens</strong>
+                <div>Health-, Deploy-, Migrations-, Setup-, API- und Support-Token werden pro Kunde kryptografisch erzeugt und verschlüsselt in der Verwaltung gespeichert.</div>
             </div>
 
             <div class="field">
@@ -105,11 +105,6 @@ ob_start();
                 <label for="health_frontend_url">Health Frontend URL</label>
                 <input class="input" type="url" id="health_frontend_url" name="health_frontend_url" placeholder="https://www.example.com" value="<?php echo htmlspecialchars((string)($old['healthFrontendUrl'] ?? $access['health_frontend_url'] ?? ''), ENT_QUOTES); ?>">
                 <div class="field__hint">Öffentliche Frontend-URL. Wird zusätzlich per HTTP geprüft.</div>
-            </div>
-
-            <div class="field">
-                <label for="deploy_token">Deploy Token</label>
-                <input class="input" type="password" id="deploy_token" name="deploy_token" placeholder="Leer lassen = nicht ändern" autocomplete="off">
             </div>
 
             <div class="field">

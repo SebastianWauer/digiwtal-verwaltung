@@ -22,6 +22,7 @@ class CiController
         private CiTokenRepository $ciTokens,
         private CustomerRepository $customerRepo,
         private ServerAccessRepository $accessRepo,
+        private CustomerRuntimeTokenRepository $runtimeTokens,
         private SupportTokenRepository $supportTokens,
         private AuditLogger $audit,
         private HealthMonitor $monitor
@@ -45,6 +46,16 @@ class CiController
         $access = $this->accessRepo->findByCustomer($customerId);
         $encrypted = $this->accessRepo->findEncrypted($customerId);
         if ($access === null || $encrypted === null) {
+            $this->json(['ok' => false, 'error' => 'no_server_access'], 404);
+        }
+
+        try {
+            $runtime = $this->runtimeTokens->ensureFor($customerId);
+        } catch (Throwable $e) {
+            $this->audit->log('ci.runtime_tokens_failed', 'customer', $customerId, $e->getMessage());
+            $this->json(['ok' => false, 'error' => 'runtime_tokens_unavailable'], 500);
+        }
+        if ($runtime === null) {
             $this->json(['ok' => false, 'error' => 'no_server_access'], 404);
         }
 
@@ -74,7 +85,6 @@ class CiController
 
         $cmsUrl = rtrim((string)($access['health_cms_url'] ?? ''), '/');
         $frontendUrl = rtrim((string)($access['health_frontend_url'] ?? ($access['canonical_base'] ?? '')), '/');
-        $deployToken = $secret('deploy_token');
 
         $this->audit->log(
             'ci.deploy_target_read',
@@ -122,12 +132,11 @@ class CiController
                 'embedded'  => self::isPathDeployment($cmsUrl, $frontendUrl),
             ],
             'tokens' => [
-                // Setup und Migration teilen sich das Deploy-Token - so macht es
-                // CmsProvisioningService::resolveTokens() auch.
-                'health'    => $secret('health_token'),
-                'deploy'    => $deployToken,
-                'migration' => $deployToken,
-                'setup'     => $deployToken,
+                'health'    => $runtime['tokens']['health'],
+                'deploy'    => $runtime['tokens']['deploy'],
+                'migration' => $runtime['tokens']['migration'],
+                'setup'     => $runtime['tokens']['setup'],
+                'api'       => $runtime['tokens']['api'],
             ],
             'site' => [
                 'name'           => (string)($access['site_name'] ?? ''),

@@ -22,23 +22,62 @@ class SupportTokenRepository
      */
     public function ensureFor(int $customerId): ?string
     {
-        $stmt = $this->pdo->prepare(
-            'SELECT support_token_enc, support_token_nonce, support_token_tag
-             FROM server_access WHERE customer_id = :cid LIMIT 1'
-        );
-        $stmt->execute([':cid' => $customerId]);
-        $row = $stmt->fetch(PDO::FETCH_ASSOC);
-
-        if (!is_array($row)) {
-            return null;
+        $ownsTransaction = !$this->pdo->inTransaction();
+        if ($ownsTransaction) {
+            $this->pdo->beginTransaction();
         }
 
-        $vorhanden = $this->decrypt($row, $customerId);
-        if ($vorhanden !== null) {
-            return $vorhanden;
-        }
+        try {
+            $stmt = $this->pdo->prepare(
+                'SELECT support_token_enc, support_token_nonce, support_token_tag
+                 FROM server_access WHERE customer_id = :cid LIMIT 1 FOR UPDATE'
+            );
+            $stmt->execute([':cid' => $customerId]);
+            $row = $stmt->fetch(PDO::FETCH_ASSOC);
 
-        return $this->rotate($customerId);
+            if (!is_array($row)) {
+                if ($ownsTransaction) {
+                    $this->pdo->commit();
+                }
+                return null;
+            }
+
+            $vorhanden = $this->decrypt($row, $customerId);
+            if ($vorhanden !== null) {
+                if ($ownsTransaction) {
+                    $this->pdo->commit();
+                }
+                return $vorhanden;
+            }
+
+            $token = bin2hex(random_bytes(32));
+            $enc = VaultCrypto::encrypt($token, 'cust:' . $customerId);
+            $update = $this->pdo->prepare(
+                'UPDATE server_access
+                 SET support_token_hash  = :hash,
+                     support_token_enc   = :enc,
+                     support_token_nonce = :nonce,
+                     support_token_tag   = :tag
+                 WHERE customer_id = :cid LIMIT 1'
+            );
+            $update->execute([
+                ':hash'  => hash('sha256', $token),
+                ':enc'   => $enc['ciphertext_b64'],
+                ':nonce' => $enc['nonce_b64'],
+                ':tag'   => $enc['tag_b64'],
+                ':cid'   => $customerId,
+            ]);
+
+            if ($ownsTransaction) {
+                $this->pdo->commit();
+            }
+            return $update->rowCount() > 0 ? $token : null;
+        } catch (Throwable $e) {
+            if ($ownsTransaction && $this->pdo->inTransaction()) {
+                $this->pdo->rollBack();
+            }
+            throw $e;
+        }
     }
 
     /** Erzeugt ein neues Token, verwirft das alte und liefert das neue im Klartext. */

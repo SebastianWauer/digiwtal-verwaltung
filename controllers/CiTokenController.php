@@ -244,9 +244,8 @@ class CiTokenController
         $body = json_encode([
             'ref' => $branch,
             'inputs' => [
-                'kunde'            => (string)$customerId,
-                'erstinstallation' => 'false',
-                'migrationen'      => 'true',
+                'kunde'       => (string)$customerId,
+                'migrationen' => 'true',
             ],
         ], JSON_UNESCAPED_SLASHES);
 

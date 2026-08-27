@@ -29,6 +29,9 @@ class ServerAccessRepository
         $stmt = $this->pdo->prepare(
             'SELECT health_token_enc, health_token_nonce, health_token_tag,
                     deploy_token_enc, deploy_token_nonce, deploy_token_tag,
+                    migration_token_enc, migration_token_nonce, migration_token_tag,
+                    setup_token_enc, setup_token_nonce, setup_token_tag,
+                    cms_api_token_enc, cms_api_token_nonce, cms_api_token_tag,
                     password_enc, password_nonce, password_tag,
                     private_key_enc, private_key_nonce, private_key_tag,
                     db_password_enc, db_password_nonce, db_password_tag,
@@ -62,6 +65,9 @@ class ServerAccessRepository
             'username'            => 'Benutzername',
             'server_path'         => 'CMS-Zielpfad',
             'html_path'           => 'Frontend-Zielpfad',
+            'db_host'             => 'DB-Host',
+            'db_name'             => 'DB-Name',
+            'db_user'             => 'DB-Benutzer',
             'health_cms_url'      => 'CMS-URL',
             'health_frontend_url' => 'Frontend-URL',
         ];
@@ -78,7 +84,7 @@ class ServerAccessRepository
             }
         }
 
-        foreach (['password' => 'Server-Passwort', 'health_token' => 'Health-Token'] as $prefix => $label) {
+        foreach (['password' => 'Server-Passwort', 'db_password' => 'DB-Passwort', 'health_token' => 'Health-Token'] as $prefix => $label) {
             foreach (['_enc', '_nonce', '_tag'] as $suffix) {
                 if (trim((string)($encrypted[$prefix . $suffix] ?? '')) === '') {
                     $missing[] = $label;
@@ -98,7 +104,8 @@ class ServerAccessRepository
             $columns = [
                 'customer_id', 'label', 'host', 'port', 'protocol', 'username', 'server_path', 'html_path',
                 'db_host', 'db_port', 'db_name', 'db_user', 'cms_admin_email', 'site_name', 'canonical_base',
-                'health_cms_url', 'health_frontend_url'
+                'health_cms_url', 'health_frontend_url',
+                'health_token_enc', 'health_token_nonce', 'health_token_tag'
             ];
             $params = [
                 $customerId,
@@ -118,6 +125,9 @@ class ServerAccessRepository
                 $data['canonical_base'],
                 $data['health_cms_url'],
                 $data['health_frontend_url'],
+                '',
+                '',
+                '',
             ];
 
             foreach ([

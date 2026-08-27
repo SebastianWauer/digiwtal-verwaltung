@@ -113,6 +113,7 @@ require_once __DIR__ . '/../repositories/CiTokenRepository.php';
 require_once __DIR__ . '/../services/VerwaltungUrl.php';
 require_once __DIR__ . '/../repositories/SupportTicketRepository.php';
 require_once __DIR__ . '/../repositories/SupportTokenRepository.php';
+require_once __DIR__ . '/../repositories/CustomerRuntimeTokenRepository.php';
 require_once __DIR__ . '/../controllers/SupportController.php';
 require_once __DIR__ . '/../controllers/SupportApiController.php';
 require_once __DIR__ . '/../controllers/CiController.php';
@@ -158,6 +159,7 @@ $webhookRepo = new WebhookTokenRepository($pdo);
 $ciTokenRepo = new CiTokenRepository($pdo);
 $supportTickets = new SupportTicketRepository($pdo);
 $supportTokens  = new SupportTokenRepository($pdo);
+$runtimeTokens  = new CustomerRuntimeTokenRepository($pdo);
 
 $healthMonitor = new HealthMonitor(
     $pdo,
@@ -168,7 +170,7 @@ $healthMonitor = new HealthMonitor(
 
 $moduleCombinator = new ModuleCombinator($customerModuleRepo, $moduleRepo);
 $cmsProvisioner = new CmsProvisioningService();
-$deployService = new DeployService($pdo, $deploymentRepo, $accessRepo, $moduleCombinator, $cmsProvisioner);
+$deployService = new DeployService($pdo, $deploymentRepo, $accessRepo, $moduleCombinator, $cmsProvisioner, $runtimeTokens);
 
 // -------------------------------------------------------
 // Controller instances
@@ -181,14 +183,14 @@ $dashboardController      = new DashboardController($customerRepo, $healthMonito
 $customerController       = new CustomerController($customerRepo, $auditLogger);
 $vaultController          = new VaultController($customerRepo, $vaultRepo);
 $moduleController         = new ModuleController($moduleRepo, $customerRepo, $customerModuleRepo);
-$serverAccessController   = new ServerAccessController($customerRepo, $accessRepo);
+$serverAccessController   = new ServerAccessController($customerRepo, $accessRepo, $runtimeTokens, $supportTokens);
 $deployController         = new DeployController($customerRepo, $accessRepo, $deploymentRepo, $deployService, $auditLogger);
 $pushController           = new PushController($pushRepo);
 $customerDetailController = new CustomerDetailController($customerRepo, $pdo);
 $adminUserController      = new AdminUserController($userRepo, $auditLogger);
 $webhookController        = new WebhookController($webhookRepo, $deploymentRepo, $deployService, $customerRepo, $auditLogger);
 $migrationController      = new MigrationController($pdo, $auditLogger);
-$ciController             = new CiController($ciTokenRepo, $customerRepo, $accessRepo, $supportTokens, $auditLogger, $healthMonitor);
+$ciController             = new CiController($ciTokenRepo, $customerRepo, $accessRepo, $runtimeTokens, $supportTokens, $auditLogger, $healthMonitor);
 $supportController        = new SupportController($supportTickets, $customerRepo, $supportTokens, $auditLogger);
 $supportApiController     = new SupportApiController($supportTickets, $supportTokens, $auditLogger);
 $ciTokenController        = new CiTokenController($ciTokenRepo, $customerRepo, $accessRepo, $auditLogger, $healthMonitor);

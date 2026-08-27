@@ -6,7 +6,12 @@ class ServerAccessController
     private CustomerRepository $customerRepo;
     private ServerAccessRepository $accessRepo;
 
-    public function __construct(CustomerRepository $customerRepo, ServerAccessRepository $accessRepo)
+    public function __construct(
+        CustomerRepository $customerRepo,
+        ServerAccessRepository $accessRepo,
+        private CustomerRuntimeTokenRepository $runtimeTokens,
+        private SupportTokenRepository $supportTokens
+    )
     {
         $this->customerRepo = $customerRepo;
         $this->accessRepo = $accessRepo;
@@ -149,30 +154,6 @@ class ServerAccessController
         $encrypted = [];
         $aad = 'cust:' . $customerId;
 
-        $healthToken = trim($_POST['health_token'] ?? '');
-        if ($healthToken !== '') {
-            try {
-                $enc = VaultCrypto::encrypt($healthToken, $aad);
-                $encrypted['health_token_enc'] = $enc['ciphertext_b64'];
-                $encrypted['health_token_nonce'] = $enc['nonce_b64'];
-                $encrypted['health_token_tag'] = $enc['tag_b64'];
-            } catch (Throwable) {
-                $errors[] = 'Fehler beim Verschlüsseln des Health-Tokens.';
-            }
-        }
-
-        $deployToken = trim($_POST['deploy_token'] ?? '');
-        if ($deployToken !== '') {
-            try {
-                $enc = VaultCrypto::encrypt($deployToken, $aad);
-                $encrypted['deploy_token_enc'] = $enc['ciphertext_b64'];
-                $encrypted['deploy_token_nonce'] = $enc['nonce_b64'];
-                $encrypted['deploy_token_tag'] = $enc['tag_b64'];
-            } catch (Throwable) {
-                $errors[] = 'Fehler beim Verschlüsseln des Deploy-Tokens.';
-            }
-        }
-
         $password = trim($_POST['password'] ?? '');
         if ($password !== '') {
             try {
@@ -244,7 +225,24 @@ class ServerAccessController
 
         $this->accessRepo->upsert($customerId, $data, $encrypted);
 
-        $_SESSION['flash_success'] = 'Serverzugang gespeichert.';
+        try {
+            $tokenResult = $this->runtimeTokens->ensureFor($customerId);
+            $supportToken = $this->supportTokens->ensureFor($customerId);
+            if ($tokenResult === null || $supportToken === null) {
+                throw new RuntimeException('Serverzugang fuer Token-Erzeugung nicht gefunden.');
+            }
+        } catch (Throwable $e) {
+            FileLogger::channel('verwaltung')->error(
+                '[RUNTIME_TOKEN_ERROR] Kunde ' . $customerId . ': ' . $e->getMessage()
+            );
+            $_SESSION['flash_errors'] = [
+                'Serverzugang gespeichert, aber die Betriebs-Tokens konnten nicht sicher angelegt werden.'
+            ];
+            header('Location: /admin/customers/' . $customerId . '/access');
+            exit;
+        }
+
+        $_SESSION['flash_success'] = 'Serverzugang gespeichert. Alle Betriebs-Tokens sind automatisch und verschluesselt hinterlegt.';
         header('Location: /admin/customers/' . $customerId . '/access');
         exit;
     }

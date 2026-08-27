@@ -8,7 +8,8 @@ class DeployService
         private DeploymentRepository $deployRepo,
         private ServerAccessRepository $accessRepo,
         private ModuleCombinator $moduleCombinator,
-        private CmsProvisioningService $cmsProvisioner
+        private CmsProvisioningService $cmsProvisioner,
+        private CustomerRuntimeTokenRepository $runtimeTokens
     ) {}
 
     public function run(int $deploymentId, int $customerId, string $type = 'cms', array $sourceOverrides = []): bool
@@ -27,6 +28,10 @@ class DeployService
             }
 
             // 3. Passwort entschlüsseln
+            if ($this->runtimeTokens->ensureFor($customerId) === null) {
+                throw new RuntimeException('Betriebs-Tokens konnten nicht angelegt werden.');
+            }
+
             $encData = $this->accessRepo->findEncrypted($customerId);
             if ($encData === null || empty($encData['password_enc'])) {
                 $this->log($deploymentId, '[ERROR] Kein Passwort im Serverzugang gespeichert.');
@@ -190,6 +195,10 @@ class DeployService
                 return false;
             }
 
+            if ($this->runtimeTokens->ensureFor($customerId) === null) {
+                throw new RuntimeException('Betriebs-Tokens konnten nicht angelegt werden.');
+            }
+
             $encData = $this->accessRepo->findEncrypted($customerId);
             if ($encData === null || empty($encData['password_enc'])) {
                 $this->log($deploymentId, '[ERROR] Kein Passwort im Serverzugang gespeichert.');
@@ -334,7 +343,11 @@ class DeployService
                 if ($cmsBaseUrl === null) {
                     $this->log($deploymentId, '[WARN] Keine CMS-URL ermittelbar - Frontend-.env wird uebersprungen. Bitte health_cms_url oder canonical_base setzen.');
                 } else {
-                    $frontendEnv = $this->cmsProvisioner->buildFrontendEnvContent($cmsBaseUrl, $frontendBaseUrl);
+                    $frontendEnv = $this->cmsProvisioner->buildFrontendEnvContent(
+                        $cmsBaseUrl,
+                        $frontendBaseUrl,
+                        (string)($tokens['api'] ?? '')
+                    );
                     if (!$this->uploadRemoteTextFile($access, $password, $htmlPath . '/.env', $frontendEnv, $method)) {
                         $this->log($deploymentId, '[ERROR] Frontend-.env konnte nicht geschrieben werden.');
                         $this->deployRepo->markFinished($deploymentId, 'failed');
