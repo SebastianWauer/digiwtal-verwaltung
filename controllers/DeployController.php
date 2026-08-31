@@ -8,7 +8,8 @@ class DeployController
         private ServerAccessRepository $accessRepo,
         private DeploymentRepository $deploymentRepo,
         private DeployService $deployService,
-        private AuditLogger $audit
+        private AuditLogger $audit,
+        private GitHubWorkflowDispatcher $githubDispatcher
     ) {}
 
     public function history(int $customerId): void
@@ -36,6 +37,33 @@ class DeployController
 
         $access = $this->accessRepo->findByCustomer($customerId);
 
+        $frontendGitHubRequirements = [];
+        $frontendRepository = trim((string)($customer['frontend_repository'] ?? ''));
+        $frontendRef = trim((string)($customer['frontend_ref'] ?? '')) ?: 'main';
+        $frontendWorkflow = trim((string)(getenv('GITHUB_FRONTEND_WORKFLOW') ?: 'deploy.yml'));
+        if ((int)($customer['is_active'] ?? 0) !== 1) {
+            $frontendGitHubRequirements[] = 'Kunde ist deaktiviert';
+        }
+        if (!CustomerRepository::hasActiveSubscription($customer)) {
+            $frontendGitHubRequirements[] = 'Abo ist nicht aktiv';
+        }
+        if (trim((string)($customer['frontend_key'] ?? '')) === '') {
+            $frontendGitHubRequirements[] = 'Frontend-Key fehlt';
+        }
+        if ($frontendRepository === '') {
+            $frontendGitHubRequirements[] = 'Frontend-Repository fehlt';
+        }
+        if (trim((string)(getenv('GITHUB_TOKEN') ?: '')) === '') {
+            $frontendGitHubRequirements[] = 'GITHUB_TOKEN fehlt in der Verwaltung';
+        }
+        $frontendReadiness = $this->accessRepo->rolloutReadiness($customerId);
+        if (!$frontendReadiness['ready']) {
+            foreach ($frontendReadiness['missing'] as $missing) {
+                $frontendGitHubRequirements[] = 'Serverzugang: ' . $missing;
+            }
+        }
+        $frontendGitHubRequirements = array_values(array_unique($frontendGitHubRequirements));
+
         $success = $_SESSION['flash_success'] ?? null;
         $flashErrors = $_SESSION['flash_errors'] ?? [];
         unset($_SESSION['flash_success'], $_SESSION['flash_errors']);
@@ -49,6 +77,92 @@ class DeployController
         $errors = array_merge($errors, $deploymentLoadErrors);
 
         require __DIR__ . '/../views/deployments/history.php';
+    }
+
+    public function dispatchFrontend(int $customerId): void
+    {
+        AdminAuth::requireAuth();
+
+        if (!Csrf::verify($_POST['csrf_token'] ?? '')) {
+            $_SESSION['flash_errors'] = ['CSRF token invalid'];
+            header('Location: /admin/customers/' . $customerId . '/deployments');
+            exit;
+        }
+
+        $customer = $this->customerRepo->findById($customerId);
+        if ($customer === null) {
+            http_response_code(404);
+            echo '<!DOCTYPE html><html><head><title>404</title></head><body><h1>404 Not Found</h1></body></html>';
+            exit;
+        }
+
+        $requirements = [];
+        if ((int)($customer['is_active'] ?? 0) !== 1) {
+            $requirements[] = 'Kunde ist deaktiviert.';
+        }
+        if (!CustomerRepository::hasActiveSubscription($customer)) {
+            $requirements[] = 'Abo ist nicht aktiv.';
+        }
+
+        $frontendKey = trim((string)($customer['frontend_key'] ?? ''));
+        $repository = trim((string)($customer['frontend_repository'] ?? ''));
+        $ref = trim((string)($customer['frontend_ref'] ?? '')) ?: 'main';
+        $workflow = trim((string)(getenv('GITHUB_FRONTEND_WORKFLOW') ?: 'deploy.yml'));
+        $token = trim((string)(getenv('GITHUB_TOKEN') ?: ''));
+
+        if ($frontendKey === '') {
+            $requirements[] = 'Frontend-Key fehlt.';
+        }
+        if ($repository === '') {
+            $requirements[] = 'Frontend-Repository fehlt.';
+        }
+        if ($token === '') {
+            $requirements[] = 'GITHUB_TOKEN fehlt in der Verwaltung.';
+        }
+
+        $readiness = $this->accessRepo->rolloutReadiness($customerId);
+        if (!$readiness['ready']) {
+            $requirements[] = 'Serverzugang unvollständig: ' . implode(', ', $readiness['missing']) . '.';
+        }
+
+        if ($requirements !== []) {
+            $_SESSION['flash_errors'] = $requirements;
+            header('Location: /admin/customers/' . $customerId . '/deployments');
+            exit;
+        }
+
+        $this->ensureNoRunningDeployment($customerId);
+        $result = $this->githubDispatcher->dispatch(
+            $repository,
+            $token,
+            $workflow,
+            $ref,
+            ['kunde' => (string)$customerId]
+        );
+
+        if ($result['ok']) {
+            $this->audit->log(
+                'deploy.frontend_github_dispatched',
+                'customer',
+                $customerId,
+                'repository: ' . $repository . ', ref: ' . $ref . ', workflow: ' . $workflow
+            );
+            $_SESSION['flash_success'] = 'Frontend-Deployment für ' . $repository
+                . ' (' . $ref . ') wurde über GitHub Actions gestartet.';
+        } else {
+            $this->audit->log(
+                'deploy.frontend_github_failed',
+                'customer',
+                $customerId,
+                'repository: ' . $repository . ', HTTP: ' . $result['status']
+            );
+            $_SESSION['flash_errors'] = [
+                'Frontend-Deployment konnte nicht gestartet werden: ' . $result['detail'],
+            ];
+        }
+
+        header('Location: /admin/customers/' . $customerId . '/deployments');
+        exit;
     }
 
     public function install(int $customerId): void

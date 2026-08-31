@@ -108,6 +108,7 @@ require_once __DIR__ . '/../services/AuditLogger.php';
 require_once __DIR__ . '/../controllers/AuditController.php';
 require_once __DIR__ . '/../services/MigrationRunner.php';
 require_once __DIR__ . '/../services/HealthMonitor.php';
+require_once __DIR__ . '/../services/GitHubWorkflowDispatcher.php';
 require_once __DIR__ . '/../controllers/MigrationController.php';
 require_once __DIR__ . '/../repositories/CiTokenRepository.php';
 require_once __DIR__ . '/../services/VerwaltungUrl.php';
@@ -171,6 +172,7 @@ $healthMonitor = new HealthMonitor(
 $moduleCombinator = new ModuleCombinator($customerModuleRepo, $moduleRepo);
 $cmsProvisioner = new CmsProvisioningService();
 $deployService = new DeployService($pdo, $deploymentRepo, $accessRepo, $moduleCombinator, $cmsProvisioner, $runtimeTokens);
+$githubDispatcher = new GitHubWorkflowDispatcher();
 
 // -------------------------------------------------------
 // Controller instances
@@ -184,7 +186,7 @@ $customerController       = new CustomerController($customerRepo, $auditLogger);
 $vaultController          = new VaultController($customerRepo, $vaultRepo);
 $moduleController         = new ModuleController($moduleRepo, $customerRepo, $customerModuleRepo);
 $serverAccessController   = new ServerAccessController($customerRepo, $accessRepo, $runtimeTokens, $supportTokens);
-$deployController         = new DeployController($customerRepo, $accessRepo, $deploymentRepo, $deployService, $auditLogger);
+$deployController         = new DeployController($customerRepo, $accessRepo, $deploymentRepo, $deployService, $auditLogger, $githubDispatcher);
 $pushController           = new PushController($pushRepo);
 $customerDetailController = new CustomerDetailController($customerRepo, $pdo);
 $adminUserController      = new AdminUserController($userRepo, $auditLogger);
@@ -193,7 +195,7 @@ $migrationController      = new MigrationController($pdo, $auditLogger);
 $ciController             = new CiController($ciTokenRepo, $customerRepo, $accessRepo, $runtimeTokens, $supportTokens, $auditLogger, $healthMonitor);
 $supportController        = new SupportController($supportTickets, $customerRepo, $supportTokens, $auditLogger);
 $supportApiController     = new SupportApiController($supportTickets, $supportTokens, $auditLogger);
-$ciTokenController        = new CiTokenController($ciTokenRepo, $customerRepo, $accessRepo, $auditLogger, $healthMonitor);
+$ciTokenController        = new CiTokenController($ciTokenRepo, $customerRepo, $accessRepo, $auditLogger, $healthMonitor, $githubDispatcher);
 $webhookManageController  = new WebhookManageController($webhookRepo, $customerRepo, $auditLogger);
 
 // -------------------------------------------------------
@@ -242,6 +244,7 @@ $router->add('GET',  '/admin/customers/{id}/deployments', [$deployController, 'h
 $router->add('POST', '/admin/customers/{id}/deployments/install', [$deployController, 'install']);
 $router->add('POST', '/admin/customers/{id}/deployments/test-connections', [$deployController, 'testConnections']);
 $router->add('POST', '/admin/customers/{id}/deployments/agent-payload', [$deployController, 'agentPayload']);
+$router->add('POST', '/admin/customers/{id}/deployments/frontend-dispatch', [$deployController, 'dispatchFrontend']);
 $router->add('POST', '/admin/customers/{id}/deployments/{deploymentId}/stop', [$deployController, 'stop']);
 $router->add('GET',  '/admin/customers/{id}/deployments/{deploymentId}/status', [$deployController, 'status']);
 $router->add('POST', '/admin/customers/{id}/deployments/{deploymentId}/rollback', [$deployController, 'rollbackToDeployment']);

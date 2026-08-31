@@ -30,19 +30,12 @@ if (!$hasServerPath) {
     $cmsDeployRequirements[] = 'CMS-Zielpfad fehlt';
 }
 
-$frontendDeployRequirements = [];
-if (!$hasHost) {
-    $frontendDeployRequirements[] = 'SFTP-Host fehlt';
-}
-if (!$hasUsername) {
-    $frontendDeployRequirements[] = 'Username fehlt';
-}
-if (!$hasHtmlPath) {
-    $frontendDeployRequirements[] = 'Frontend-Zielpfad fehlt';
-}
-if (!$hasFrontendApiBase) {
-    $frontendDeployRequirements[] = 'Health CMS URL oder canonical_base fehlt';
-}
+$frontendGitHubRequirements = is_array($frontendGitHubRequirements ?? null)
+    ? $frontendGitHubRequirements
+    : ['Frontend-Konfiguration konnte nicht geprüft werden'];
+$frontendRepository = trim((string)($frontendRepository ?? ($customer['frontend_repository'] ?? '')));
+$frontendRef = trim((string)($frontendRef ?? ($customer['frontend_ref'] ?? 'main'))) ?: 'main';
+$frontendWorkflow = trim((string)($frontendWorkflow ?? 'deploy.yml')) ?: 'deploy.yml';
 
 $combinedDeployRequirements = [];
 if (!$hasHost) {
@@ -149,19 +142,19 @@ php agent/server.php</code>
                 <p class="page-subtitle">Erstinstallation und Updates kompakt an einem Ort.</p>
             </div>
         </header>
-        <?php if (!empty($cmsDeployRequirements) || !empty($frontendDeployRequirements) || !empty($combinedDeployRequirements)): ?>
+        <?php if (!empty($cmsDeployRequirements) || !empty($frontendGitHubRequirements) || !empty($combinedDeployRequirements)): ?>
             <div class="hint-card hint-card--warning deploy-warning-card">
-                <strong>Vor dem Deploy fehlen noch Pflichtfelder im Serverzugang.</strong>
+                <strong>Vor dem Deploy fehlen noch Voraussetzungen.</strong>
                 <?php if (!empty($cmsDeployRequirements)): ?>
                     <div>CMS: <?php echo htmlspecialchars(implode(', ', $cmsDeployRequirements), ENT_QUOTES); ?></div>
                 <?php endif; ?>
-                <?php if (!empty($frontendDeployRequirements)): ?>
-                    <div>Frontend: <?php echo htmlspecialchars(implode(', ', $frontendDeployRequirements), ENT_QUOTES); ?></div>
+                <?php if (!empty($frontendGitHubRequirements)): ?>
+                    <div>Frontend: <?php echo htmlspecialchars(implode(', ', $frontendGitHubRequirements), ENT_QUOTES); ?></div>
                 <?php endif; ?>
                 <?php if (!empty($combinedDeployRequirements)): ?>
                     <div>CMS + Frontend: <?php echo htmlspecialchars(implode(', ', $combinedDeployRequirements), ENT_QUOTES); ?></div>
                 <?php endif; ?>
-                <div class="field__hint">Bitte zuerst den Serverzugang vervollständigen, bevor der lokale Agent angefragt wird.</div>
+                <div class="field__hint">Bitte zuerst die genannten Kunden-, GitHub- und Serverangaben vervollständigen.</div>
             </div>
         <?php endif; ?>
         <div class="deploy-grid">
@@ -191,18 +184,20 @@ php agent/server.php</code>
                 </div>
             </form>
 
-            <form method="POST" data-local-agent-form="1" data-validation-errors="<?php echo htmlspecialchars(json_encode($frontendDeployRequirements, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?: '[]', ENT_QUOTES); ?>" action="/admin/customers/<?php echo (int)($customer['id'] ?? 0); ?>/deployments/agent-payload" class="deploy-card">
+            <form method="POST" action="/admin/customers/<?php echo (int)($customer['id'] ?? 0); ?>/deployments/frontend-dispatch" class="deploy-card">
                 <?php echo Csrf::field(); ?>
-                <input type="hidden" name="type" value="frontend">
-                <div class="deploy-card__eyebrow">Update</div>
-                <h2 class="deploy-card__title">Frontend deployen</h2>
-                <p class="deploy-card__copy">Lokalen Frontend-Ordner wählen, komprimieren und per Agent übertragen.</p>
-                <?php if (!empty($frontendDeployRequirements)): ?>
-                    <div class="field__hint">Blockiert bis konfiguriert: <?php echo htmlspecialchars(implode(', ', $frontendDeployRequirements), ENT_QUOTES); ?></div>
+                <div class="deploy-card__eyebrow">Kundenspezifisch · GitHub Actions</div>
+                <h2 class="deploy-card__title">Frontend ausrollen</h2>
+                <p class="deploy-card__copy">
+                    Startet <code><?php echo htmlspecialchars($frontendWorkflow, ENT_QUOTES); ?></code>
+                    aus <code><?php echo htmlspecialchars($frontendRepository !== '' ? $frontendRepository : 'kein Repository', ENT_QUOTES); ?></code>
+                    auf <code><?php echo htmlspecialchars($frontendRef, ENT_QUOTES); ?></code>.
+                </p>
+                <?php if (!empty($frontendGitHubRequirements)): ?>
+                    <div class="field__hint">Blockiert bis konfiguriert: <?php echo htmlspecialchars(implode(', ', $frontendGitHubRequirements), ENT_QUOTES); ?></div>
                 <?php endif; ?>
-                <input class="file-input" type="file" name="frontend_files[]" data-frontend-picker="1" webkitdirectory directory multiple required>
                 <div class="submit-row">
-                    <button class="btn btn--info" type="submit" <?php echo !empty($frontendDeployRequirements) ? 'disabled' : ''; ?>>Frontend deployen</button>
+                    <button class="btn btn--info" type="submit" <?php echo !empty($frontendGitHubRequirements) ? 'disabled' : ''; ?> onclick="return confirm('Kundenspezifisches Frontend jetzt über GitHub Actions ausrollen?');">Frontend ausrollen</button>
                 </div>
             </form>
 

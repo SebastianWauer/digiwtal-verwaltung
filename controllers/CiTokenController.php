@@ -16,7 +16,8 @@ class CiTokenController
         private CustomerRepository $customerRepo,
         private ServerAccessRepository $accessRepo,
         private AuditLogger $audit,
-        private HealthMonitor $monitor
+        private HealthMonitor $monitor,
+        private GitHubWorkflowDispatcher $githubDispatcher
     ) {}
 
     public function index(): void
@@ -241,49 +242,16 @@ class CiTokenController
         string $workflow,
         string $branch
     ): array {
-        $body = json_encode([
-            'ref' => $branch,
-            'inputs' => [
-                'kunde'       => (string)$customerId,
+        return $this->githubDispatcher->dispatch(
+            $repo,
+            $token,
+            $workflow,
+            $branch,
+            [
+                'kunde' => (string)$customerId,
                 'migrationen' => 'true',
-            ],
-        ], JSON_UNESCAPED_SLASHES);
-
-        $url = 'https://api.github.com/repos/' . $repo . '/actions/workflows/'
-            . rawurlencode($workflow) . '/dispatches';
-        $ch = curl_init($url);
-        if ($ch === false) {
-            return ['ok' => false, 'status' => 0, 'detail' => 'GitHub-Verbindung konnte nicht initialisiert werden.'];
-        }
-
-        curl_setopt_array($ch, [
-            CURLOPT_POST           => true,
-            CURLOPT_POSTFIELDS     => $body,
-            CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_TIMEOUT        => 20,
-            CURLOPT_HTTPHEADER     => [
-                'Accept: application/vnd.github+json',
-                'Authorization: Bearer ' . $token,
-                'X-GitHub-Api-Version: 2022-11-28',
-                'Content-Type: application/json',
-                'User-Agent: Digiwtal-Verwaltung',
-            ],
-        ]);
-        $response = curl_exec($ch);
-        $status = (int)curl_getinfo($ch, CURLINFO_HTTP_CODE);
-        $curlError = curl_error($ch);
-        curl_close($ch);
-
-        if ($status === 204) {
-            return ['ok' => true, 'status' => $status, 'detail' => ''];
-        }
-
-        $detail = $curlError !== '' ? $curlError : trim(substr((string)$response, 0, 300));
-        return [
-            'ok' => false,
-            'status' => $status,
-            'detail' => 'GitHub HTTP ' . $status . ($detail !== '' ? ': ' . $detail : ''),
-        ];
+            ]
+        );
     }
 
     private function back(): void
