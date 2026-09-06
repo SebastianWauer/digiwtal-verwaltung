@@ -208,7 +208,7 @@
 }
 
 .table-log summary {
-  color: #b7d2ff;
+  color: var(--info-text);
   cursor: pointer;
   font-weight: 700;
 }

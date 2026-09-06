@@ -25,6 +25,8 @@ jobs:
             --exclude='.git/' \
             --exclude='.github/' \
             --exclude='CLAUDE.md' \
+            --exclude='DESIGN.md' \
+            --exclude='AGENTS.md' \
             --exclude='secrets/' \
             --exclude='.env' \
             --exclude='storage/' \

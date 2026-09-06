@@ -15,6 +15,10 @@
   --btn-border: rgba(255, 255, 255, 0.1);
   --btn-hover: rgba(255, 255, 255, 0.08);
   --active: rgba(255, 255, 255, 0.1);
+  /* Fokusring. Eigenes Token, bewusst an keine Bedeutung gekoppelt: Fokus
+     zeigt Bedienung an, nicht Zustand. Deckendes Weiss auf --bg, und als
+     Kontur formal etwas anderes als der flaechige Hover. */
+  --focus: #ffffff;
   --shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
   --radius-lg: 18px;
   --radius-md: 14px;
@@ -23,6 +27,17 @@
   --warning: #ffba49;
   --danger: #ff6b6b;
   --info: #6aa9ff;
+  /* Toenungen des Info-Blaus. Alle aus --info abgeleitet, damit der Ton an
+     genau einer Stelle steht und nirgends als zweiter Hex-Wert auftaucht.
+     --info-border und --info-border-strong sind auf 1px Breite praktisch
+     nicht zu unterscheiden; sie bleiben vorerst getrennt, weil ihre
+     Zusammenlegung entweder den Button oder die Meldungsflaechen aendern
+     wuerde. */
+  --info-surface: color-mix(in srgb, var(--info) 8%, transparent);
+  --info-surface-strong: color-mix(in srgb, var(--info) 14%, transparent);
+  --info-border: color-mix(in srgb, var(--info) 20%, transparent);
+  --info-border-strong: color-mix(in srgb, var(--info) 28%, transparent);
+  --info-text: color-mix(in srgb, var(--info) 50%, white);
 }
 
 * {

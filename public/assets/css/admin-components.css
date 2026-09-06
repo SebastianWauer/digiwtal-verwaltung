@@ -18,7 +18,6 @@
 .btn:hover,
 .btn:focus-visible {
   opacity: 0.94;
-  outline: none;
 }
 
 .btn--primary {
@@ -33,9 +32,9 @@
 }
 
 .btn--info {
-  background: rgba(106, 169, 255, 0.14);
-  border-color: rgba(106, 169, 255, 0.28);
-  color: #b7d2ff;
+  background: var(--info-surface-strong);
+  border-color: var(--info-border-strong);
+  color: var(--info-text);
 }
 
 .btn--success {
@@ -88,6 +87,41 @@
   font-weight: 600;
 }
 
+/* Fokus und Deaktivierung.
+   :focus-visible statt :focus, damit der Ring beim Mausklick ausbleibt und nur
+   bei Tastaturbedienung erscheint. Der Ring liegt ausserhalb des Elements und
+   ist damit auch dort sichtbar, wo die Flaeche selbst hell ist. */
+.btn:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
+.btn:disabled,
+.btn[aria-disabled="true"],
+input:disabled,
+select:disabled,
+textarea:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Ein deaktivierter Button reagiert auf nichts. */
+.btn:disabled:hover,
+.btn[aria-disabled="true"]:hover {
+  opacity: 0.5;
+  transform: none;
+}
+
+.btn--ghost:disabled:hover,
+.btn--ghost[aria-disabled="true"]:hover {
+  background: transparent;
+  border-color: transparent;
+  color: var(--muted);
+}
+
 .alert {
   padding: 12px 14px;
   border-radius: 12px;
@@ -108,9 +142,9 @@
 }
 
 .alert--info {
-  background: rgba(106, 169, 255, 0.08);
-  border-color: rgba(106, 169, 255, 0.2);
-  color: #b7d2ff;
+  background: var(--info-surface);
+  border-color: var(--info-border);
+  color: var(--info-text);
 }
 
 .alert--warning {
@@ -321,7 +355,7 @@
 }
 
 .link-action--info {
-  color: #b7d2ff;
+  color: var(--info-text);
 }
 
 .link-action--success {
@@ -390,10 +424,12 @@
   border-color: rgba(124, 58, 237, 0.3);
 }
 
+/* Neutraler Chip: Operator ist die Regel, nicht die Ausnahme. Farbe bleibt
+   dem Superadmin vorbehalten. Rahmenstaerke wie bei --unknown. */
 .status-pill--operator {
-  color: #b7d2ff;
-  background: rgba(8, 145, 178, 0.12);
-  border-color: rgba(8, 145, 178, 0.3);
+  color: var(--muted);
+  background: transparent;
+  border-color: var(--input-border);
 }
 
 .status-dot {
@@ -483,9 +519,9 @@
 }
 
 .hint-card--info {
-  background: rgba(106, 169, 255, 0.08);
-  border-color: rgba(106, 169, 255, 0.2);
-  color: #b7d2ff;
+  background: var(--info-surface);
+  border-color: var(--info-border);
+  color: var(--info-text);
 }
 
 .hint-card--warning {
