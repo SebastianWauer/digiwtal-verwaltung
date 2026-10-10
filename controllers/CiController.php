@@ -25,7 +25,8 @@ class CiController
         private CustomerRuntimeTokenRepository $runtimeTokens,
         private SupportTokenRepository $supportTokens,
         private AuditLogger $audit,
-        private HealthMonitor $monitor
+        private HealthMonitor $monitor,
+        private CustomerBlockRepository $blocks
     ) {}
 
     /** GET /api/ci/deploy-target?customer=<id> */
@@ -102,6 +103,7 @@ class CiController
                 'name' => (string)($customer['name'] ?? ''),
                 'updates_available_until' => trim((string)($customer['abo_active_until'] ?? '')) ?: 'unlimited',
             ],
+            'pagebuilder' => ['allowed_blocks' => $this->blocks->findByCustomer($customerId)],
             'frontend' => [
                 'key'        => $frontendKey,
                 'repository' => $frontendRepository,
