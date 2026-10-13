@@ -324,6 +324,8 @@ class DeployService
 
             require_once __DIR__ . '/../repositories/CustomerBlockRepository.php';
             $allowedBlocks = (new CustomerBlockRepository($this->pdo))->findByCustomer($customerId);
+            require_once __DIR__ . '/../repositories/CustomerWebsiteRepository.php';
+            $websiteMode = (new CustomerWebsiteRepository($this->pdo))->findMode($customerId);
             $envContent = $this->cmsProvisioner->buildEnvContent(
                 $access,
                 $dbPassword,
@@ -331,7 +333,8 @@ class DeployService
                 $cmsBaseUrl,
                 (string)($customer['abo_active_until'] ?? ''),
                 trim((string)($customer['frontend_key'] ?? '')),
-                $allowedBlocks
+                $allowedBlocks,
+                $websiteMode
             );
             if (!$this->uploadRemoteTextFile($access, $password, $remotePath . '/.env', $envContent, $method)) {
                 $this->log($deploymentId, '[ERROR] .env konnte nicht auf den Zielserver geschrieben werden.');

@@ -21,7 +21,8 @@ class CmsProvisioningService
         ?string $cmsBaseUrl = null,
         ?string $updatesAvailableUntil = null,
         string $customerKey = '',
-        ?array $allowedBlocks = null
+        ?array $allowedBlocks = null,
+        string $websiteMode = 'multipage'
     ): string {
         $lines = [
             $this->envLine('APP_ENV', 'production'),
@@ -39,6 +40,7 @@ class CmsProvisioningService
                 $lines[] = $this->envLine($envKey, $value);
             }
         }
+        $lines[] = $this->envLine('WEBSITE_MODE', $websiteMode === 'onepager' ? 'onepager' : 'multipage');
         $lines[] = $this->envLine('PAGEBUILDER_CUSTOMER_KEY', $customerKey);
         $lines[] = $this->envLine('PAGEBUILDER_ALLOWED_BLOCKS', json_encode($allowedBlocks, JSON_THROW_ON_ERROR));
         $lines[] = $this->envLine('CMS_API_TOKEN', (string)($tokens['api'] ?? ''));

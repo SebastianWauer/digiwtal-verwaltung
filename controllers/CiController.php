@@ -26,7 +26,8 @@ class CiController
         private SupportTokenRepository $supportTokens,
         private AuditLogger $audit,
         private HealthMonitor $monitor,
-        private CustomerBlockRepository $blocks
+        private CustomerBlockRepository $blocks,
+        private CustomerWebsiteRepository $websites
     ) {}
 
     /** GET /api/ci/deploy-target?customer=<id> */
@@ -148,6 +149,7 @@ class CiController
                     : '',
             ],
             'site' => [
+                'website_mode' => $this->websites->findMode($customerId),
                 'name'           => (string)($access['site_name'] ?? ''),
                 'canonical_base' => (string)($access['canonical_base'] ?? ''),
                 'admin_email'    => (string)($access['cms_admin_email'] ?? ''),

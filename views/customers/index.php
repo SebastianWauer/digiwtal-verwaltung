@@ -119,6 +119,7 @@ ob_start();
                                     <a class="link-action" href="/admin/customers/<?php echo (int)($c['id'] ?? 0); ?>/modules">Module</a>
                                     <?php if (($_SESSION['admin_role'] ?? '') === 'superadmin'): ?>
                                     <a class="link-action" href="/admin/customers/<?php echo (int)($c['id'] ?? 0); ?>/blocks">Bloecke</a>
+                                    <a class="link-action" href="/admin/customers/<?php echo (int)($c['id'] ?? 0); ?>/website">Website</a>
                                     <?php endif; ?>
                                     <a class="link-action link-action--success" href="/admin/customers/<?php echo (int)($c['id'] ?? 0); ?>/vault">Tresor</a>
                                     <a class="link-action link-action--info" href="/admin/customers/<?php echo (int)($c['id'] ?? 0); ?>/access">Zugang</a>
